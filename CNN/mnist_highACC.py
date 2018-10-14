@@ -7,6 +7,13 @@ from torchvision import datasets, transforms
 
 from tools import *
 
+'''
+    Gets to 99.60% test accuracy after 30 epochs.
+    (Maybe enhanced after 50 epochs, but not apparent.)
+    93 seconds per epoch on a Nvidia 1060 6G GPU.
+    Don't use only CPU to run it, which would cost 3.3 hours per epoch using some GPU.
+'''
+
 
 class CNN(nn.Module):
     def __init__(self):
