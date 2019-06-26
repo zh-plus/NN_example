@@ -1,4 +1,4 @@
-from time import time
+import time
 
 import torch
 import matplotlib.pyplot as plt
@@ -9,7 +9,7 @@ def get_error_visible(model, device, test_loader):
     torch.no_grad()
     errors = []
 
-    tic = time.time()
+    tic = time.perf_counter()
     for data, target in test_loader:
         data = data.to(device)
         output = model(data)
@@ -18,7 +18,7 @@ def get_error_visible(model, device, test_loader):
         error = [t for t in zip(data.cpu(), label.cpu(), target) if t[1] != t[2]]
         errors.extend(error)
 
-    toc = time.time()
+    toc = time.perf_counter()
     print(toc - tic, 's')
 
     for img, error_lable, correct_lable in errors:

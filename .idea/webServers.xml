@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="34eef736-1e08-4b72-a95c-d367f3847d16" name="TencentServer" url="http://10.66.235.221">
+        <fileTransfer host="10.66.235.221" port="22" rootFolder="/home/vision/zhenghao/NN_example" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions controlEncoding="utf-8" dataProtectionLevel="Private" keepAliveTimeout="900000" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

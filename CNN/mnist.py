@@ -1,5 +1,7 @@
-import time
-
+# import os
+# import time
+#
+# import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -135,7 +137,7 @@ def main():
 
     kwargs = {'num_workers': 8, 'pin_memory': True} if use_cuda else {}
     train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('/MNIST-data', train=True, download=True,
+        datasets.MNIST('./MNIST-data', train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
@@ -143,7 +145,7 @@ def main():
         batch_size=BATCH_SIZE, shuffle=True, **kwargs)
 
     test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('/MNIST-data', train=False, transform=transforms.Compose([
+        datasets.MNIST('./MNIST-data', train=False, transform=transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))
         ])),
@@ -161,9 +163,9 @@ def main():
     loss_rec, acc_rec = [], []
     for epoch in range(1, EPOCH + 1):
         # lr_decay.step(epoch)
-        tic = time.time()
+        tic = time.perf_counter()
         train(model, device, train_loader, optimizer, epoch, loss_rec)
-        toc = time.time()
+        toc = time.perf_counter()
         print(toc - tic, 's')
         test(model, device, test_loader, acc_rec)
         # torch.save(model.state_dict(), 'C:\\Users\\10578\\Desktop\\MNIST\\model' + str(epoch) + '.pth')
@@ -175,4 +177,7 @@ def main():
 
 
 if __name__ == '__main__':
+    # os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+    print(f'using GPU: {torch.cuda.is_available()}')
+
     main()
