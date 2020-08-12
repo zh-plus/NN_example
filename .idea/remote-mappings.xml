@@ -10,6 +10,13 @@
             </list>
           </settings>
         </remote-mappings>
+        <remote-mappings server-id="python@sftp://zf@10.20.111.5:22/home/zf/anaconda3/envs/py38/bin/python">
+          <settings>
+            <list>
+              <mapping local-root="$PROJECT_DIR$" remote-root="/home/zf/zhenghao/NN_example" />
+            </list>
+          </settings>
+        </remote-mappings>
       </list>
     </list>
   </component>

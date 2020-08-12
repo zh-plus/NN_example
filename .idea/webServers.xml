@@ -3,11 +3,17 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="4eec2b95-9d1b-4aa2-a611-f9bc05efc8e5" name="TencentServer" url="http://10.66.235.221">
-        <fileTransfer host="10.66.235.221" port="22" rootFolder="/home/vision/disk/zhenghao" accessType="SFTP">
+        <fileTransfer rootFolder="/home/vision/disk/zhenghao" accessType="SFTP" host="10.66.235.221" port="22" sshConfigId="fbbd7e1c-4156-4921-80b2-1d8e4852f84a" sshConfig="TencentServer">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
-          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+      <webServer id="fd107af1-e3ee-4b5c-a251-89186354d80a" name="NN_example" url="http://10.20.111.5">
+        <fileTransfer rootFolder="/home/zf/zhenghao/NN_example" accessType="SFTP" host="10.20.111.5" port="22" sshConfigId="79a8af27-37d2-46f1-b03e-35f5acbfb91a" sshConfig="zf@10.20.111.5:22 (p)">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
         </fileTransfer>
       </webServer>
     </option>
