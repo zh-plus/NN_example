@@ -29,9 +29,19 @@ class Batch:
     def make_std_mask(tgt, pad):
         """Create a mask to hide padding and future words."""
         tgt_mask = (tgt != pad).unsqueeze(-2)
-        tgt_mask = tgt_mask & torch.tensor(subsequent_mask(tgt.size(-1)).type_as(tgt_mask.data))
+        tgt_mask = tgt_mask & subsequent_mask(tgt.size(-1)).type_as(tgt_mask.data)
 
         return tgt_mask
+
+    def cuda(self):
+        self.src = self.src.cuda()
+        self.src_mask = self.src_mask.cuda()
+
+        if hasattr(self, 'tgt'):
+            self.tgt = self.tgt.cuda()
+            self.tgt_y = self.tgt_y.cuda()
+            self.tgt_mask = self.tgt_mask.cuda()
+            self.n_tokens = self.n_tokens.cuda()
 
 
 def run_epoch(data_iter, model, loss_compute):
@@ -40,13 +50,11 @@ def run_epoch(data_iter, model, loss_compute):
     total_loss = 0
     tokens = 0
 
-    for i, batch in tqdm(enumerate(data_iter)):
-        src, tgt, src_mask, tgt_mask = batch.src, batch.tgt, batch.src_mask, batch.tgt_mask
-
+    for i, batch in enumerate(data_iter):
         if torch.cuda.is_available():
-            src, tgt, src_mask, tgt_mask = batch.src.cuda(), batch.tgt.cuda(), batch.src_mask.cuda(), batch.tgt_mask.cuda()
+            batch.cuda()
 
-        out = model(src, tgt, src_mask, tgt_mask)
+        out = model(batch.src, batch.tgt, batch.src_mask, batch.tgt_mask)
         loss = loss_compute(out, batch.tgt_y, batch.n_tokens)
         total_loss += loss.item()
         total_tokens += batch.n_tokens.item()
@@ -54,11 +62,22 @@ def run_epoch(data_iter, model, loss_compute):
 
         if i % 50 == 1:
             elapsed = perf_counter() - start
-            print(f'Epoch Step: {i} Loss: {loss / batch.n_tokens} Tokens per Sec: {elapsed / tokens}')
+            print(f'Epoch Step: {i} Loss: {loss / batch.n_tokens} Tokens per Sec: {tokens / elapsed}')
             start = perf_counter()
             tokens = 0
 
     return total_loss / total_tokens
+
+
+def test(data_iter, model):
+    total_tokens = 0
+    correct = 0
+
+    for i, batch in enumerate(data_iter):
+        if torch.cuda.is_available():
+            batch.cuda()
+
+        out = model(batch.src, batch.tgt, batch.src_mask, batch.tgt_mask)
 
 
 global max_src_in_batch, max_tgt_in_batch
@@ -141,7 +160,7 @@ class LabelSmoothing(nn.Module):
         if mask.dim() > 0:
             true_dist.index_fill_(0, mask.squeeze(), 0.0)
         self.true_dist = true_dist
-        return self.criterion(x, torch.tensor(true_dist, requires_grad=False))
+        return self.criterion(x, true_dist.clone().detach())
 
 
 def test_smooth():

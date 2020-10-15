@@ -1,7 +1,4 @@
 import os
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ['CUDA_VISIBLE_DEVICES'] = '6'
-
 
 from time import perf_counter
 
@@ -12,8 +9,10 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 
-from Transformer.train import Batch, LabelSmoothing, NoamOpt, run_epoch
-from Transformer.transformer import MyTransformer
+from Transformer.train import Batch, LabelSmoothing, NoamOpt, run_epoch, test
+from Transformer.transformer import MyTransformer, subsequent_mask
+
+torch.cuda.set_device(7)
 
 """
 We can begin by trying out a simple copy-task.
@@ -27,8 +26,8 @@ def data_gen(vocab, d_sentence, batch_size, n_batch):
     for i in range(n_batch):
         data = torch.from_numpy(np.random.randint(1, vocab, size=(batch_size, d_sentence)))
         data[:, 0] = 1
-        src = torch.tensor(data, requires_grad=False)
-        tgt = torch.tensor(data, requires_grad=False)
+        src = data.clone().detach()
+        tgt = data.clone().detach()
         yield Batch(src, tgt, 0)
 
 
@@ -51,18 +50,43 @@ class SimpleLossCompute:
         return loss.item() * norm
 
 
+def greedy_decode(model, src, src_mask, max_len, start_symbol):
+    ys = torch.ones(1, 1).fill_(start_symbol).type_as(src.data)
+
+    if torch.cuda.is_available():
+        src, src_mask, ys = src.cuda(), src_mask.cuda(), ys.cuda()
+
+    memory = model.model.encode(src, src_mask)
+    for i in range(max_len - 1):
+        out = model.model.decode(memory, src_mask,
+                           ys.clone().detach(),
+                           subsequent_mask(ys.size(1)).clone().detach().type_as(src.data))
+        prob = model.model.generator(out[:, -1])
+        _, next_word = torch.max(prob, dim=1)
+        next_word = next_word.item()
+        ys = torch.cat([ys, torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=1)
+    return ys
+
+
 if __name__ == '__main__':
     vocab = 11
     criterion = LabelSmoothing(size=vocab, padding_idx=0, smoothing=0.0)
-    model = MyTransformer(vocab, vocab, N=2)
-    model_opt = NoamOpt(model.d_model, 1, 400, torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
+    my_model = MyTransformer(vocab, vocab, N=2)
+    model_opt = NoamOpt(my_model.d_model, 1, 400, torch.optim.Adam(my_model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
 
     if torch.cuda.is_available():
-        model.cuda()
+        my_model.cuda()
         print('using GPU!')
 
     for epoch in range(100):
-        model.train()
-        run_epoch(data_gen(vocab, 10, 30, 20), model, SimpleLossCompute(model.model.generator, criterion, model_opt))
-        model.eval()
-        print(run_epoch(data_gen(vocab, 10, 30, 5), model, SimpleLossCompute(model.model.generator, criterion, None)))
+        print(f'Epoch: {epoch}')
+        my_model.train()
+        run_epoch(data_gen(vocab, 10, 1000, 20), my_model, SimpleLossCompute(my_model.model.generator, criterion, model_opt))
+        # my_model.eval()
+        # print(test(data_gen(vocab, 10, 300, 5), my_model))
+
+    my_model.eval()
+    src = torch.tensor([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]).long()
+    src_mask = torch.ones(1, 1, 10)
+    result = greedy_decode(my_model, src, src_mask, max_len=10, start_symbol=1)
+    print(result)

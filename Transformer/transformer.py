@@ -260,7 +260,7 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('PE', PE)
 
     def forward(self, x):
-        x = x + torch.tensor(self.PE[:, :x.size(1)], requires_grad=False)
+        x = x + self.PE[:, :x.size(1)].clone().detach()
         x = self.dropout(x)
 
         return x
@@ -314,7 +314,7 @@ class MyTransformer(nn.Module):
 
         for p in self.model.parameters():
             if p.dim() > 1:
-                nn.init.xavier_uniform(p)
+                nn.init.xavier_uniform_(p)
 
     def forward(self, src, tgt, src_mask, tgt_mask):
         return self.model(src, tgt, src_mask, tgt_mask)
