@@ -12,7 +12,7 @@ import torch.nn as nn
 from Transformer.train import Batch, LabelSmoothing, NoamOpt, run_epoch, test
 from Transformer.transformer import MyTransformer, subsequent_mask
 
-torch.cuda.set_device(7)
+torch.cuda.set_device(6)
 
 """
 We can begin by trying out a simple copy-task.
@@ -72,16 +72,16 @@ if __name__ == '__main__':
     vocab = 11
     criterion = LabelSmoothing(size=vocab, padding_idx=0, smoothing=0.0)
     my_model = MyTransformer(vocab, vocab, N=2)
-    model_opt = NoamOpt(my_model.d_model, 1, 400, torch.optim.Adam(my_model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
+    model_opt = NoamOpt(my_model.d_model, 1, 200, torch.optim.Adam(my_model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
 
     if torch.cuda.is_available():
         my_model.cuda()
         print('using GPU!')
 
-    for epoch in range(100):
+    for epoch in range(500):
         print(f'Epoch: {epoch}')
         my_model.train()
-        run_epoch(data_gen(vocab, 10, 1000, 20), my_model, SimpleLossCompute(my_model.model.generator, criterion, model_opt))
+        run_epoch(data_gen(vocab, 10, 2000, 20), my_model, SimpleLossCompute(my_model.model.generator, criterion, model_opt))
         # my_model.eval()
         # print(test(data_gen(vocab, 10, 300, 5), my_model))
 
